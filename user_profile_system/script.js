@@ -1,6 +1,8 @@
 //variables
 const login = document.getElementById("login");
 const logout = document.getElementById("logout");
+const para1 = document.getElementById("para1");
+const para2 = document.getElementById("para2");
 
 
 
@@ -13,13 +15,36 @@ let user = {
       isloggedin :false,
       login:function(){
                 if(this.isloggedin){
-                     console.log("you are already logged in");
+                   para1.textContent =  "logged in";
+                   this.isloggedin==true;
                 }else{
-                     console.log("login as",this.name);
+                 this.isloggedin==false;
                 }
-      }
-}
+        },
 
+       logout: function(){
+         if(this.isloggedin){
+            para2.textContent="logged out";
+                 this.isloggedin==false;
+          }else{
+            cd  web project    
+            this.isloggedin==true;
+                 
+            }
+
+            }
+
+         }
+       
+
+
+//login
 login.addEventListener("click", function(){
      user.login();
+});
+
+
+//logout
+logout.addEventListener("click", function(){
+     user.logout();
 })
