@@ -27,7 +27,7 @@ let user = {
             para2.textContent="logged out";
                  this.isloggedin==false;
           }else{
-            cd  web project    
+         
             this.isloggedin==true;
                  
             }
