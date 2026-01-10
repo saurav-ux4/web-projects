@@ -2,7 +2,7 @@
 const login = document.getElementById("login");
 const logout = document.getElementById("logout");
 const para1 = document.getElementById("para1");
-const para2 = document.getElementById("para2");
+
 
 
 
@@ -15,20 +15,22 @@ let user = {
       isloggedin :false,
       login:function(){
                 if(this.isloggedin){
-                   para1.textContent =  "logged in";
-                   this.isloggedin==true;
+                   para1.textContent =  "you are already logged in";
+                 
                 }else{
-                 this.isloggedin==false;
+                  para1.textContent =  "you are successfully logged in";
+                  this.isloggedin=true;
                 }
         },
 
        logout: function(){
          if(this.isloggedin){
-            para2.textContent="logged out";
-                 this.isloggedin==false;
+           para1.textContent="you are logged out";
+            this.isloggedin=false;
+                 
           }else{
-         
-            this.isloggedin==true;
+            
+                para1.textContent="you are already logged out";
                  
             }
 
