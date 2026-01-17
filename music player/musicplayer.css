@@ -8,6 +8,7 @@
 body{
    height: 100vh;
    border: solid 3px rgb(255, 1, 13);
+   background-color: rgb(3, 138, 255);
 
 }
 
@@ -40,7 +41,7 @@ body{
 
 .loading-bar{
     height:10%;
-    border:solid 2px rgb(32, 18, 64);
+    border:solid 2px rgb(240, 237, 245);
 }
 
 .buttons{
@@ -50,9 +51,13 @@ body{
    gap:15px;
    height:25% ;
    border: solid 2px rgb(252, 208, 10);
+   background-color: rgb(12, 78, 132);
 }
 
 .btn{
      border:none;
 }
+
+
+
 

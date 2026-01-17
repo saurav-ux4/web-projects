@@ -9,6 +9,9 @@ const thumbnail = document.querySelector(".thumbnail");
 const Images = document.getElementById("image");
 
 
+
+
+
  let songs = [ "song1.mp3",
                "song2.mp3",
                "song3.mp3",
@@ -22,84 +25,86 @@ const Images = document.getElementById("image");
                 "song4.jpg",
  ];
 
- let currentImage = 0;
+ 
 
-
-
-
-
+ let isPlaying =false;
+Images.src=images[currentIndex];
+music.src=songs[currentIndex];
+ music.pause();
 
 //play
 playBtn.addEventListener("click", function(){
-  Images.src=images[currentImage];
-  music.src=songs[currentIndex];
-  
-
  
-  
-     music.play();
- 
+   if(isPlaying){
 
-});
-
-
-//pause
-pauseBtn.addEventListener("click", function(){
-  
-   if( music.paused == true){
-      music.play();
-   }else {
-      music.pause();
-   }
    
+     music.pause();
+     isPlaying = false; 
+
+   }else{
+           
+           music.play();
+           isPlaying = true; 
+
+   }
+ 
+
 });
+
+
 
 
 //previous
 previous.addEventListener("click", function(){
-        //for songs
-        music.src=songs[currentIndex ];
-        currentIndex--;
-          music.play();
-
-
-        //for images
-         Images.src=images[currentImage];
-         currentImage--;
-
-      
-        
-            if(currentIndex < 0 ){
+       currentIndex--;
+    if(currentIndex < 0 ){
          currentIndex= songs.length-1;
-         currentImage=images.length-1;
+         currentIndex=images.length-1;
+
+         music.src=songs[songs.length-1 ];
+         Images.src=images[songs.length-1 ];
+         music.play();
+       
+
+  }else{
+         
+         music.src=songs[currentIndex ];
+         Images.src=images[currentIndex ];
+         
+         music.play();
+         currentIndex--;
+    
+         
+
   }
 
-  
-
-   
 })
-
 
 
 
 //next
 next.addEventListener("click", function(){
    //for song
-   music.src= songs[currentIndex] ;
-   music.play();
-   
-   
-   Images.src=images[currentImage]
-   currentImage++
-   currentIndex++;
   
-
-
-  if(currentIndex > songs.length -1){
+     if(currentIndex >= songs.length-1 ){
      currentIndex=0;
-     currentImage=0;
+    
+    
+     music.src= songs[currentIndex];
+     Images.src=images[currentIndex]
+     music.play();
+    
+
+     
+  }else{
+   
+   currentIndex++
+   music.src= songs[currentIndex];
+   Images.src=images[currentIndex]
+   music.play();
   }
-  
+
+
   
 })
 
