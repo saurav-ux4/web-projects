@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player Prototype</title>
+    <link rel="stylesheet" href="aiMusicPlayer.css">
+</head>
+<body>
+    <div class="player-container">
+        <div class="now-playing">
+            <div class="thumbnail-container">
+                <img id="thumbnail" src="https://images.pexels.com/photos/167474/pexels-photo-167474.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Song Thumbnail">
+            </div>
+            <div class="song-title" id="songTitle">Select a song</div>
+            <div class="artist" id="artist">-</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="time-info">
+            <span id="currentTime">0:00</span>
+            <span id="duration">0:00</span>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="prevBtn" title="Previous">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                </svg>
+            </button>
+            <button class="control-btn play-btn" id="playBtn" title="Play/Pause">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="nextBtn" title="Next">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept="audio/*" multiple>
+            <button class="upload-btn" id="uploadBtn">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-badge-plus">
+                        <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+                        <line x1="12" x2="12" y1="8" y2="16"/>
+                        <line x1="8" x2="16" y1="12" y2="12"/>
+                 </svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="playlist">
+        <h3> Playlist</h3>
+        <div id="playlistContainer"></div>
+    </div>
+
+    <script src="aiMusicPlayer.js"></script>
+</body>
+</html>
