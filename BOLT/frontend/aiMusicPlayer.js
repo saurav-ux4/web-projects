@@ -46,7 +46,7 @@ async function initPlayer() {
 // Fetch songs from the backend
 async function fetchSongs() {
     try {
-        const response = await fetch('YOUR_RENDER_BACKEND_URL/songs'); // Replace with your backend URL
+        const response = await fetch('https://web-projects-el0e.onrender.com/songs'); // Replace with your backend URL
         playerState.songs = await response.json();
         renderPlaylist();
     } catch (error) {
@@ -158,7 +158,7 @@ async function handleFileUpload(e) {
         formData.append('artist', 'Your Upload');
 
         try {
-            const response = await fetch('YOUR_RENDER_BACKEND_URL/upload', { // Replace with your backend URL
+            const response = await fetch('https://web-projects-el0e.onrender.com/upload', { // Replace with your backend URL
                 method: 'POST',
                 body: formData,
             });
