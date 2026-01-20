@@ -25,7 +25,7 @@ const elements = {
 };
 
 // Backend URL configuration
-const BACKEND_URL = 'https://ai-music-player-475v.onrender.com'; // Your Render backend URL
+const BACKEND_URL = 'https://ai-music-player-backend-p5ad.onrender.com'; // Your Render backend URL
 
 // Initialize player
 async function initPlayer() {
