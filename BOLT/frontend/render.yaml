@@ -1,19 +1,17 @@
 services:
   - type: web
-    name: ai-music-player-backend
+    name: ai-music-player
     env: node
     buildCommand: npm install
     startCommand: node server.js
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://saurav982216_db_user:hGcStjbBugg2K5se@cluster0.lruurc9.mongodb.net/ai-music-player
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false
+        value: dchyewou4
       - key: CLOUDINARY_API_KEY
-        sync: false
+        value: 378845981546511
       - key: CLOUDINARY_API_SECRET
-        sync: false
+        value: tIE3-JdRdzTDseFKji7It-fjBs0
