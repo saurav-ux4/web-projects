@@ -13,8 +13,10 @@ const port = process.env.PORT || 5000;
 
 // CORS configuration for cloud deployment
 app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:3000', 'https://your-frontend-domain.vercel.app'], // Add your frontend domains
-    credentials: true
+    origin: '*', // Allow all origins for now (you can restrict later)
+    credentials: true,
+    methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());

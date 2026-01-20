@@ -24,6 +24,9 @@ const elements = {
     thumbnail: document.getElementById('thumbnail')
 };
 
+// Backend URL configuration
+const BACKEND_URL = 'https://web-projects-el0e.onrender.com'; // Your Render backend URL
+
 // Initialize player
 async function initPlayer() {
     await fetchSongs();
@@ -47,17 +50,32 @@ async function initPlayer() {
 // Fetch songs from the backend
 async function fetchSongs() {
     try {
-      const response = await fetch('https://web-projects-el0e.onrender.com/songs'); // Changed to web host
+        const response = await fetch(`${BACKEND_URL}/songs`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            mode: 'cors' // Explicitly enable CORS
+        });
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         playerState.songs = await response.json();
+        console.log(`Fetched ${playerState.songs.length} songs from backend`);
         renderPlaylist();
     } catch (error) {
         console.error('Error fetching songs:', error);
         // Show error message to user
         elements.playlistContainer.innerHTML = `<div style="color: #ff6b6b; text-align: center; padding: 1rem;">
-            Error loading songs. Please check if server is running.
+            Error loading songs. Please check if:
+            <ul style="text-align: left; margin: 10px 0 0 20px;">
+                <li>Backend server is running</li>
+                <li>CORS is properly configured on server</li>
+                <li>You have a stable internet connection</li>
+            </ul>
         </div>`;
     }
 }
@@ -176,9 +194,10 @@ async function handleFileUpload(e) {
         formData.append('artist', 'Your Upload');
 
         try {
-            const response = await fetch('https://web-projects-el0e.onrender.com/upload', { // Changed to web host
+            const response = await fetch(`${BACKEND_URL}/upload`, {
                 method: 'POST',
                 body: formData,
+                mode: 'cors' // Explicitly enable CORS
             });
 
             if (!response.ok) {
@@ -188,6 +207,7 @@ async function handleFileUpload(e) {
             const result = await response.json();
             console.log('Upload successful:', result);
             await fetchSongs(); // Refresh the song list
+            alert('Song uploaded successfully!');
         } catch (error) {
             console.error('Error uploading file:', error);
             alert('Error uploading file. Please check console for details.');
