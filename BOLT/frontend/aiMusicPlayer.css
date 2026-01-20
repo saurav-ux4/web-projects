@@ -171,6 +171,11 @@ body {
     max-height: 300px; /* Limit height and make scrollable */
     overflow-y: auto; /* Add vertical scroll when needed */
     padding-right: 10px; /
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    overscroll-behavior: contain; /* Prevent scroll chaining */
+    touch-action: pan-y; /* Allow vertical touch scrolling */
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
 }
 
 .playlist h3 {
@@ -182,6 +187,7 @@ body {
     padding: 0.5rem;
     border-radius: 5px;
     z-index: 2;
+    backdrop-filter: blur(5px);
 }
 
 .playlist-item {
@@ -191,6 +197,8 @@ body {
     margin-bottom: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
+    user-select: none; /* Prevent text selection on touch */
+    -webkit-user-select: none;
 }
 
 .playlist-item:hover {
@@ -200,4 +208,86 @@ body {
 .playlist-item.playing {
     background: rgba(255, 255, 255, 0.2);
     border-left: 4px solid #fff;
+}
+
+
+/* ----------for mobile----------*/
+
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+        justify-content: flex-start; /* Better for mobile scrolling */
+        min-height: 100vh;
+        height: auto;
+    }
+    
+    .player-container {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .playlist {
+        max-height: 50vh; /* Use viewport height for mobile */
+        margin-bottom: 1rem;
+    }
+    
+    .thumbnail-container {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .song-title {
+        font-size: 1.3rem;
+    }
+    
+    .controls {
+        gap: 1rem;
+    }
+    
+    .control-btn {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .play-btn {
+        width: 55px;
+        height: 55px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .playlist {
+        max-height: 40vh;
+    }
+    
+    .player-container {
+        padding: 0.8rem;
+    }
+    
+    .song-title {
+        font-size: 1.2rem;
+    }
+    
+    .artist {
+        font-size: 0.9rem;
+    }
+}
+
+/* Prevent iOS text size adjustment */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Better touch feedback for playlist items */
+.playlist-item:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Prevent pull-to-refresh on mobile (optional) */
+body {
+    overscroll-behavior-y: contain;
 }
