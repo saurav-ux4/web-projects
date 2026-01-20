@@ -47,7 +47,7 @@ async function initPlayer() {
 // Fetch songs from the backend
 async function fetchSongs() {
     try {
-        const response = await fetch('http://localhost:5000/songs'); // Changed to localhost
+      const response = await fetch('https://web-projects-el0e.onrender.com/songs'); // Changed to web host
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -176,7 +176,7 @@ async function handleFileUpload(e) {
         formData.append('artist', 'Your Upload');
 
         try {
-            const response = await fetch('http://localhost:5000/upload', { // Changed to localhost
+            const response = await fetch('https://web-projects-el0e.onrender.com/upload', { // Changed to web host
                 method: 'POST',
                 body: formData,
             });
