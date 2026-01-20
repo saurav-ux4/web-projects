@@ -1,23 +1,26 @@
 const express = require('express');
 const mongoose = require('mongoose');
-mongoose.set('strictQuery', false);  // Add this line
+mongoose.set('strictQuery', false);
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 
 console.log("SERVER.JS IS RUNNING");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// CORS configuration for cloud deployment
+// FIXED CORS CONFIGURATION
 app.use(cors({
-    origin: '*', // Allow all origins for now (you can restrict later)
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:3000', 'http://localhost:8080'],
     credentials: true,
-    methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -28,15 +31,12 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// MongoDB Connection (for Atlas)
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-music-player', {
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-}).then(() => console.log('✅ Connected to MongoDB Atlas'))
-    .catch(err => {
-        console.error('❌ MongoDB connection error:', err);
-        console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
-    });
+}).then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 // Song Schema
 const songSchema = new mongoose.Schema({
@@ -73,15 +73,11 @@ app.post('/upload', upload.single('audio'), async (req, res) => {
             return res.status(400).json({ message: 'No audio file provided' });
         }
 
-        console.log('Uploading file to Cloudinary...');
-
         // Upload to Cloudinary
-        const cloudinaryUpload = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.buffer.toString('base64')}`, {
-            resource_type: 'auto',  // Changed from 'audio' to 'auto' for better compatibility
+        const cloudinaryUpload = await cloudinary.uploader.upload(`data:audio/mp3;base64,${file.buffer.toString('base64')}`, {
+            resource_type: 'audio',
             folder: 'ai-music-player'
         });
-
-        console.log('Cloudinary upload successful:', cloudinaryUpload.secure_url);
 
         // Save song metadata to MongoDB
         const newSong = new Song({
@@ -95,7 +91,7 @@ app.post('/upload', upload.single('audio'), async (req, res) => {
         res.status(201).json({ message: 'Song uploaded successfully', song: newSong });
     } catch (error) {
         console.error('Error uploading song:', error);
-        res.status(500).json({ message: 'Error uploading song', error: error.message });
+        res.status(500).json({ message: 'Error uploading song', error: error });
     }
 });
 
@@ -103,13 +99,16 @@ app.get("/", (req, res) => {
     res.send("AI Music Player backend is running");
 });
 
-// Health check route
+// Health check route - FIXED to be accessible
 app.get("/health", (req, res) => {
-    res.json({ ok: true, message: "Server is healthy", timestamp: new Date() });
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Explicitly set CORS header
+    res.json({ 
+        ok: true, 
+        message: "Server is running",
+        timestamp: new Date().toISOString()
+    });
 });
 
 app.listen(port, () => {
-    console.log(`🚀 Server is running on port ${port}`);
-    console.log(`🌐 MongoDB: ${process.env.MONGODB_URI ? 'Atlas configured' : 'Using local'}`);
-    console.log(`☁️ Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'Configured' : 'Not configured'}`);
+    console.log(`Server is running on port ${port}`);
 });

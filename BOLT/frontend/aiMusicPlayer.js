@@ -52,11 +52,11 @@ async function fetchSongs() {
     try {
         const response = await fetch(`${BACKEND_URL}/songs`, {
             method: 'GET',
+            mode: 'cors', // Explicitly set mode
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
-            },
-            mode: 'cors' // Explicitly enable CORS
+            }
         });
         
         if (!response.ok) {
@@ -64,18 +64,12 @@ async function fetchSongs() {
         }
         
         playerState.songs = await response.json();
-        console.log(`Fetched ${playerState.songs.length} songs from backend`);
         renderPlaylist();
     } catch (error) {
         console.error('Error fetching songs:', error);
         // Show error message to user
         elements.playlistContainer.innerHTML = `<div style="color: #ff6b6b; text-align: center; padding: 1rem;">
-            Error loading songs. Please check if:
-            <ul style="text-align: left; margin: 10px 0 0 20px;">
-                <li>Backend server is running</li>
-                <li>CORS is properly configured on server</li>
-                <li>You have a stable internet connection</li>
-            </ul>
+            Error loading songs. ${error.message}
         </div>`;
     }
 }
@@ -190,14 +184,14 @@ async function handleFileUpload(e) {
     for (const file of files) {
         const formData = new FormData();
         formData.append('audio', file);
-        formData.append('title', file.name.replace(/\.[^/.]+$/, "")); // Remove extension
+        formData.append('title', file.name.replace(/\.[^/.]+$/, ""));
         formData.append('artist', 'Your Upload');
 
         try {
             const response = await fetch(`${BACKEND_URL}/upload`, {
                 method: 'POST',
                 body: formData,
-                mode: 'cors' // Explicitly enable CORS
+                mode: 'cors' // Explicitly set mode
             });
 
             if (!response.ok) {
@@ -206,15 +200,12 @@ async function handleFileUpload(e) {
 
             const result = await response.json();
             console.log('Upload successful:', result);
-            await fetchSongs(); // Refresh the song list
-            alert('Song uploaded successfully!');
+            await fetchSongs();
         } catch (error) {
             console.error('Error uploading file:', error);
-            alert('Error uploading file. Please check console for details.');
         }
     }
 
-    // Reset input
     e.target.value = '';
 }
 
