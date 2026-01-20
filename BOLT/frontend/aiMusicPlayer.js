@@ -1,3 +1,4 @@
+
 // Player state
 const playerState = {
     audio: new Audio(),
@@ -26,7 +27,7 @@ const elements = {
 // Initialize player
 async function initPlayer() {
     await fetchSongs();
-    renderPlaylist();
+    // Removed duplicate renderPlaylist() call here
 
     // Event listeners
     elements.playBtn.addEventListener('click', togglePlay);
@@ -46,11 +47,18 @@ async function initPlayer() {
 // Fetch songs from the backend
 async function fetchSongs() {
     try {
-        const response = await fetch('https://web-projects-el0e.onrender.com/songs'); // Replace with your backend URL
+        const response = await fetch('http://localhost:5000/songs'); // Changed to localhost
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         playerState.songs = await response.json();
         renderPlaylist();
     } catch (error) {
         console.error('Error fetching songs:', error);
+        // Show error message to user
+        elements.playlistContainer.innerHTML = `<div style="color: #ff6b6b; text-align: center; padding: 1rem;">
+            Error loading songs. Please check if server is running.
+        </div>`;
     }
 }
 
@@ -58,14 +66,19 @@ async function fetchSongs() {
 function togglePlay() {
     if (playerState.isPlaying) {
         playerState.audio.pause();
+        playerState.isPlaying = false;
     } else {
         if (playerState.currentSongIndex === -1 && playerState.songs.length > 0) {
             playSong(0);
-        } else {
-            playerState.audio.play();
+        } else if (playerState.currentSongIndex >= 0) {
+            playerState.audio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                playerState.isPlaying = false;
+                updatePlayButton();
+            });
+            playerState.isPlaying = true;
         }
     }
-    playerState.isPlaying = !playerState.isPlaying;
     updatePlayButton();
 }
 
@@ -99,15 +112,18 @@ function playSong(index) {
 
     elements.songTitle.textContent = song.title;
     elements.artist.textContent = song.artist;
-    elements.thumbnail.src = "https://images.pexels.com/photos/167474/pexels-photo-167474.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"; //song.thumbnail;
+    elements.thumbnail.src = "https://images.pexels.com/photos/167474/pexels-photo-167474.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1";
 
-    // Change background color
-    changeBackgroundColor();
-
-    playerState.audio.play();
-    playerState.isPlaying = true;
-    updatePlayButton();
-    renderPlaylist();
+    playerState.audio.load(); // Preload the audio
+    playerState.audio.play().then(() => {
+        playerState.isPlaying = true;
+        updatePlayButton();
+        renderPlaylist();
+    }).catch(error => {
+        console.error('Error playing song:', error);
+        playerState.isPlaying = false;
+        updatePlayButton();
+    });
 }
 
 // Update play button icon
@@ -121,7 +137,7 @@ function updatePlayButton() {
 // Update progress bar
 function updateProgress() {
     const { currentTime, duration } = playerState.audio;
-    const progressPercent = (currentTime / duration) * 100;
+    const progressPercent = (currentTime / duration) * 100 || 0;
     elements.progress.style.width = `${progressPercent}%`;
 
     elements.currentTime.textContent = formatTime(currentTime);
@@ -134,12 +150,14 @@ function setProgress(e) {
     const clickX = e.offsetX;
     const duration = playerState.audio.duration;
 
-    playerState.audio.currentTime = (clickX / width) * duration;
+    if (duration) {
+        playerState.audio.currentTime = (clickX / width) * duration;
+    }
 }
 
 // Format time (mm:ss)
 function formatTime(seconds) {
-    if (isNaN(seconds)) return "0:00";
+    if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
 
     const minutes = Math.floor(seconds / 60);
     seconds = Math.floor(seconds % 60);
@@ -158,7 +176,7 @@ async function handleFileUpload(e) {
         formData.append('artist', 'Your Upload');
 
         try {
-            const response = await fetch('https://web-projects-el0e.onrender.com/upload', { // Replace with your backend URL
+            const response = await fetch('http://localhost:5000/upload', { // Changed to localhost
                 method: 'POST',
                 body: formData,
             });
@@ -172,6 +190,7 @@ async function handleFileUpload(e) {
             await fetchSongs(); // Refresh the song list
         } catch (error) {
             console.error('Error uploading file:', error);
+            alert('Error uploading file. Please check console for details.');
         }
     }
 
@@ -182,6 +201,11 @@ async function handleFileUpload(e) {
 // Render playlist
 function renderPlaylist() {
     elements.playlistContainer.innerHTML = '';
+
+    if (playerState.songs.length === 0) {
+        elements.playlistContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 1rem;">No songs in playlist. Upload some music!</div>';
+        return;
+    }
 
     playerState.songs.forEach((song, index) => {
         const item = document.createElement('div');
@@ -198,12 +222,6 @@ function renderPlaylist() {
         item.addEventListener('click', () => playSong(index));
         elements.playlistContainer.appendChild(item);
     });
-}
-
-// Change background color
-function changeBackgroundColor() {
-    const randomIndex = Math.floor(Math.random() * playerState.backgroundColors.length);
-    document.body.style.backgroundColor = playerState.backgroundColors[randomIndex];
 }
 
 // Initialize when DOM is loaded
