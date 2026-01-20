@@ -1,37 +1,17 @@
 {
-  "name": "ai-music-player",
-  "version": "2.0.0",
-  "description": "Full-stack AI Music Player with Cloudinary and MongoDB",
+  "name": "ai-music-player-backend",
+  "version": "1.0.0",
+  "description": "Backend for AI Music Player",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "build": "echo 'No build required for Node.js app'",
-    "test": "echo \"No tests specified\" && exit 0"
+    "start": "node server.js"
   },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "keywords": [
-    "music-player",
-    "ai",
-    "cloudinary",
-    "mongodb",
-    "express",
-    "render"
-  ],
-  "author": "AI Music Player",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.0.0",
-    "multer": "^1.4.5-lts.1",
-    "cloudinary": "^1.40.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "mongoose": "^6.0.0",
+    "multer": "^1.4.5-lts.1",
+    "cloudinary": "^1.30.0"
   }
 }
