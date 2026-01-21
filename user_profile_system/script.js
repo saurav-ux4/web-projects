@@ -2,6 +2,8 @@
 const login = document.getElementById("login");
 const logout = document.getElementById("logout");
 const para1 = document.getElementById("para1");
+const profile = document.getElementById("profile");
+const profilelog = document.getElementById("prolog");
 
 
 
@@ -9,24 +11,25 @@ const para1 = document.getElementById("para1");
 
 // object of user
 let user = {
-      name:"saurav",
-      age: 19,
-      email:"saurav.982216@gmail.com",
-      isloggedin :false,
+                profile:  {   name:"saurav",
+                              age: 19,
+                              email:"saurav.982216@gmail.com",
+                              isloggedin :false},
+
       login:function(){
-                if(this.isloggedin){
+                if(this.profile.isloggedin){
                    para1.textContent =  "you are already logged in";
                  
                 }else{
                   para1.textContent =  "you are successfully logged in";
-                  this.isloggedin=true;
+                  this.profile.isloggedin=true;
                 }
         },
 
        logout: function(){
-         if(this.isloggedin){
+         if(this.profile.isloggedin){
            para1.textContent="you are logged out";
-            this.isloggedin=false;
+            this.profile.isloggedin=false;
                  
           }else{
             
@@ -34,7 +37,22 @@ let user = {
                  
             }
 
+            },
+
+       getProfile: function(){
+           profilelog.innerHTML = "";
+            if(this.profile.isloggedin==true){
+                    
+               for(let key in this.profile){
+                     profilelog.innerHTML += key + ":" + this.profile[key]+ "<br>";
+               }
+               }else{
+                     profilelog.textContent= "you are logged out";
+               }
             }
+       
+ 
+      
 
          }
        
@@ -49,4 +67,11 @@ login.addEventListener("click", function(){
 //logout
 logout.addEventListener("click", function(){
      user.logout();
-})
+});
+
+//profile
+profile.addEventListener("click", function(){
+    
+        user.getProfile();
+       
+});

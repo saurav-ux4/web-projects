@@ -7,6 +7,60 @@
     <link rel="stylesheet" href="aiMusicPlayer.css">
 </head>
 <body>
+    <!-- Login Screen -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🎵 AI Music Player</h1>
+            <p>Enter your email to access your personal music library</p>
+        </div>
+        
+        <div id="emailStep" class="login-step">
+            <div class="input-group">
+                <input type="email" id="emailInput" placeholder="Enter your email" required>
+                <button id="sendOtpBtn" class="login-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                    </svg>
+                    Send OTP
+                </button>
+            </div>
+        </div>
+        
+        <div id="otpStep" class="login-step" style="display: none;">
+            <div class="input-group">
+                <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6">
+                <button id="verifyOtpBtn" class="login-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                        <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                    </svg>
+                    Verify & Enter
+                </button>
+            </div>
+            <p class="otp-note">Check your email for the OTP. It expires in 10 minutes.</p>
+            <button id="resendOtpBtn" class="text-btn">Resend OTP</button>
+        </div>
+        
+        <div id="loginMessage" class="login-message"></div>
+        
+        <div class="login-footer">
+            <small>Your session will expire when you close the tab</small>
+        </div>
+    </div>
+</div>
+
+<!-- Main Player (initially hidden) -->
+<div id="mainApp" style="display: none;">
+    <!-- Your existing player container code here -->
+    <div class="player-container">
+        <!-- ... existing player code ... -->
+    </div>
+    <div class="playlist">
+        <h3>Playlist</h3>
+        <div id="playlistContainer"></div>
+    </div>
+</div>
     <div class="player-container">
         <div class="now-playing">
             <div class="thumbnail-container">

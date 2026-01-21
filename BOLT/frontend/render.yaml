@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-music-player
+    name: ai-music-player-v2
     env: node
     buildCommand: npm install
     startCommand: node server.js
@@ -15,3 +15,10 @@ services:
         value: 378845981546511
       - key: CLOUDINARY_API_SECRET
         value: tIE3-JdRdzTDseFKji7It-fjBs0
+      - key: NODE_ENV
+        value: production
+      # Add these AFTER you set them up in Render dashboard
+      # - key: EMAIL_USER
+      #   sync: false
+      # - key: EMAIL_PASS
+      #   sync: false
