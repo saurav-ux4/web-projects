@@ -1,19 +1,21 @@
 {
   "name": "ai-music-player-backend",
-  "version": "1.0.0",
-  "description": "Backend for AI Music Player with Authentication",
+  "version": "2.0.0",
+  "description": "AI Music Player with OTP Authentication",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
-    "cloudinary": "^2.9.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.0",
     "express": "^4.18.2",
-    "mongoose": "^6.0.0",
+    "mongoose": "^6.13.8",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^7.0.12"
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "nodemailer": "^6.9.7"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
