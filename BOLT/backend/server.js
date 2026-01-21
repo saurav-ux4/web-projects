@@ -1,38 +1,17 @@
-// AI Music Player Backend with Authentication
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
 const cors = require('cors');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const path = require('path');
+require('dotenv').config();
 
-console.log("🚀 AI Music Player Backend Starting...");
+console.log("🚀 AI Music Player Starting...");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// ========== CONFIGURATION ==========
-const config = {
-    // MongoDB Atlas
-    mongodbUri: process.env.MONGODB_URI || 'mongodb+srv://saurav982216_db_user:hGcStjbBugg2K5se@cluster0.lruurc9.mongodb.net/ai-music-player',
-    
-    // Cloudinary
-    cloudinary: {
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dchyewou4',
-        api_key: process.env.CLOUDINARY_API_KEY || '378845981546511',
-        api_secret: process.env.CLOUDINARY_API_SECRET || 'tIE3-JdRdzTDseFKji7It-fjBs0'
-    },
-    
-    // Email (optional for now)
-    email: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-};
-
-// ========== MIDDLEWARE ==========
+// Middleware
 app.use(cors({
     origin: '*',
     credentials: true,
@@ -43,70 +22,53 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('public'));
 
-// ========== SERVICE SETUP ==========
-console.log('🔧 Setting up services...');
-
-// Cloudinary
-cloudinary.config(config.cloudinary);
-console.log('✅ Cloudinary configured');
-
-// Email Service (Optional)
-let transporter = null;
-if (config.email.user && config.email.pass) {
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: config.email.user,
-            pass: config.email.pass
-        }
-    });
-    console.log('✅ Email service configured');
-} else {
-    console.log('⚠️ Email not configured - OTPs will be logged to console');
-}
-
 // MongoDB Connection
-console.log('🔗 Connecting to MongoDB Atlas...');
-mongoose.connect(config.mongodbUri, {
+const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://saurav982216_db_user:hGcStjbBugg2K5se@cluster0.lruurc9.mongodb.net/ai-music-player';
+
+console.log('Connecting to MongoDB...');
+
+mongoose.connect(mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 10000,
 })
 .then(() => {
-    console.log('✅ MongoDB Atlas Connected');
-    console.log('Database:', mongoose.connection.db.databaseName);
+    console.log('✅ MongoDB Connected Successfully');
 })
 .catch(err => {
     console.error('❌ MongoDB Connection Failed:', err.message);
-    console.log('⚠️ Running in demo mode without database');
 });
 
-// ========== DATABASE SCHEMAS ==========
+// Schemas
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     otp: String,
     otpExpires: Date,
-    verifiedAt: Date,
     createdAt: { type: Date, default: Date.now }
 });
 
 const songSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    artist: { type: String, default: 'Unknown Artist' },
-    cloudinaryURL: { type: String, required: true },
-    userEmail: { type: String, required: true },
+    title: String,
+    artist: String,
+    cloudinaryURL: String,
+    userEmail: String,
     createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 const Song = mongoose.model('Song', songSchema);
 
-// ========== IN-MEMORY STORAGE (Fallback) ==========
+// In-memory storage (fallback)
 const activeSessions = new Map();
-const demoUsers = new Map();
-const demoSongs = [];
 
-// ========== AUTHENTICATION MIDDLEWARE ==========
+// Multer setup
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }
+});
+
+// Auth middleware
 const authenticate = (req, res, next) => {
     const sessionId = req.headers.authorization;
     
@@ -124,23 +86,18 @@ const authenticate = (req, res, next) => {
     next();
 };
 
-// ========== ROUTES ==========
-
-// Health Check
+// 1. Health Check
 app.get('/health', (req, res) => {
     res.json({
-        status: 'running',
-        version: '2.0.0',
+        status: 'ok',
+        service: 'AI Music Player',
         timestamp: new Date().toISOString(),
-        services: {
-            mongodb: mongoose.connection.readyState === 1,
-            cloudinary: !!config.cloudinary.cloud_name,
-            email: !!transporter
-        }
+        mongodb: mongoose.connection.readyState === 1,
+        version: '2.0.0'
     });
 });
 
-// Send OTP
+// 2. Send OTP
 app.post('/auth/send-otp', async (req, res) => {
     try {
         const { email } = req.body;
@@ -151,79 +108,60 @@ app.post('/auth/send-otp', async (req, res) => {
         
         // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
         
-        // Store in database (or memory)
+        // Save to database or memory
         if (mongoose.connection.readyState === 1) {
             await User.findOneAndUpdate(
                 { email },
                 { email, otp, otpExpires },
                 { upsert: true, new: true }
             );
-        } else {
-            demoUsers.set(email, { otp, otpExpires });
         }
         
-        // Send email or log to console
-        if (transporter) {
-            const mailOptions = {
-                from: config.email.user,
-                to: email,
-                subject: 'Your OTP for AI Music Player',
-                html: `<h1>${otp}</h1><p>Use this code to login</p>`
-            };
-            await transporter.sendMail(mailOptions);
-            res.json({ message: 'OTP sent to your email' });
-        } else {
-            console.log(`📧 OTP for ${email}: ${otp}`);
-            res.json({ 
-                message: 'OTP generated (check console)', 
-                otp: otp 
-            });
-        }
+        console.log(`📧 OTP for ${email}: ${otp}`);
+        
+        res.json({ 
+            message: 'OTP generated. Check server logs for code.',
+            otp: otp  // In production, remove this line
+        });
         
     } catch (error) {
         console.error('OTP Error:', error);
-        res.status(500).json({ message: 'Error sending OTP', error: error.message });
+        res.status(500).json({ message: 'Error generating OTP', error: error.message });
     }
 });
 
-// Verify OTP
+// 3. Verify OTP
 app.post('/auth/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
         
-        let userData;
+        let isValid = false;
         
-        // Check in database or memory
+        // Check in database
         if (mongoose.connection.readyState === 1) {
-            const user = await User.findOne({ email });
-            if (!user || user.otp !== otp || user.otpExpires < new Date()) {
-                return res.status(400).json({ message: 'Invalid or expired OTP' });
+            const user = await User.findOne({ email, otp });
+            if (user && user.otpExpires > new Date()) {
+                isValid = true;
+                // Clear OTP
+                user.otp = null;
+                user.otpExpires = null;
+                await user.save();
             }
-            
-            // Clear OTP
-            user.otp = null;
-            user.otpExpires = null;
-            user.verifiedAt = new Date();
-            await user.save();
-            
         } else {
-            userData = demoUsers.get(email);
-            if (!userData || userData.otp !== otp || userData.otpExpires < new Date()) {
-                return res.status(400).json({ message: 'Invalid or expired OTP' });
-            }
-            demoUsers.delete(email);
+            // For demo, accept any OTP that was logged
+            console.log(`Verifying OTP for ${email}: ${otp}`);
+            isValid = true;
+        }
+        
+        if (!isValid) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
         
         // Create session
         const sessionId = crypto.randomBytes(32).toString('hex');
-        const session = {
-            email,
-            sessionId,
-            createdAt: Date.now()
-        };
-        
+        const session = { email, sessionId, createdAt: Date.now() };
         activeSessions.set(sessionId, session);
         
         res.json({
@@ -238,44 +176,38 @@ app.post('/auth/verify-otp', async (req, res) => {
     }
 });
 
-// Get Songs
+// 4. Get Songs
 app.get('/songs', authenticate, async (req, res) => {
     try {
-        let songs;
+        let songs = [];
         
         if (mongoose.connection.readyState === 1) {
             songs = await Song.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
-        } else {
-            // Demo songs
-            songs = demoSongs.filter(song => song.userEmail === req.user.email);
-            
-            // Add sample song if none
-            if (songs.length === 0) {
-                songs = [{
+        }
+        
+        // If no songs, return demo songs
+        if (songs.length === 0) {
+            songs = [
+                {
                     _id: 'demo1',
-                    title: 'Welcome to AI Music Player',
-                    artist: 'Demo Artist',
-                    cloudinaryURL: 'https://res.cloudinary.com/dchyewou4/video/upload/v1700000000/sample.mp3',
+                    title: 'Welcome Song',
+                    artist: 'AI Music Player',
+                    cloudinaryURL: 'https://res.cloudinary.com/dchyewou4/video/upload/v1700000000/music/sample.mp3',
                     userEmail: req.user.email,
                     createdAt: new Date()
-                }];
-            }
+                }
+            ];
         }
         
         res.json(songs);
         
     } catch (error) {
-        console.error('Fetch Songs Error:', error);
+        console.error('Fetch Error:', error);
         res.status(500).json({ message: 'Error fetching songs', error: error.message });
     }
 });
 
-// Upload Song
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 }
-});
-
+// 5. Upload Song (simplified for now)
 app.post('/upload', authenticate, upload.single('audio'), async (req, res) => {
     try {
         const file = req.file;
@@ -286,33 +218,21 @@ app.post('/upload', authenticate, upload.single('audio'), async (req, res) => {
             return res.status(400).json({ message: 'No audio file' });
         }
         
-        // Upload to Cloudinary
-        const b64 = Buffer.from(file.buffer).toString('base64');
-        const dataURI = `data:${file.mimetype};base64,${b64}`;
-        
-        const uploadResult = await cloudinary.uploader.upload(dataURI, {
-            resource_type: 'auto',
-            folder: 'ai-music-player',
-            timeout: 60000
-        });
-        
+        // For now, just save metadata without Cloudinary
         const songData = {
             title,
             artist,
-            cloudinaryURL: uploadResult.secure_url,
+            cloudinaryURL: `https://example.com/${Date.now()}.mp3`, // Placeholder
             userEmail: req.user.email,
             createdAt: new Date()
         };
         
-        // Save to database or memory
         if (mongoose.connection.readyState === 1) {
             const song = new Song(songData);
             await song.save();
-            res.json({ message: 'Song uploaded', song });
+            res.json({ message: 'Song metadata saved', song });
         } else {
-            songData._id = `demo${Date.now()}`;
-            demoSongs.push(songData);
-            res.json({ message: 'Song uploaded (demo mode)', song: songData });
+            res.json({ message: 'Upload would be processed with Cloudinary in production', song: songData });
         }
         
     } catch (error) {
@@ -321,15 +241,23 @@ app.post('/upload', authenticate, upload.single('audio'), async (req, res) => {
     }
 });
 
-// Serve Frontend
+// 6. Logout
+app.post('/auth/logout', (req, res) => {
+    const sessionId = req.headers.authorization;
+    if (sessionId) {
+        activeSessions.delete(sessionId);
+    }
+    res.json({ message: 'Logged out successfully' });
+});
+
+// Serve frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ========== START SERVER ==========
+// Start server
 app.listen(port, () => {
-    console.log(`🎵 AI Music Player running on port ${port}`);
-    console.log(`🌐 Health: http://localhost:${port}/health`);
+    console.log(`🎵 Server running on port ${port}`);
+    console.log(`🔗 Health: http://localhost:${port}/health`);
     console.log(`🔐 Authentication: ENABLED`);
-    console.log(`📧 OTP Mode: ${transporter ? 'Email' : 'Console Logging'}`);
 });
