@@ -4,44 +4,37 @@ const multer = require('multer');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
-require('dotenv').config();
 
-console.log("🚀 AI Music Player Starting...");
+console.log("🎵 AI Music Player Backend Starting...");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
     origin: '*',
-    credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(express.static('public'));
 
 // MongoDB Connection
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://saurav982216_db_user:hGcStjbBugg2K5se@cluster0.lruurc9.mongodb.net/ai-music-player';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://saurav982216_db_user:hGcStjbBugg2K5se@cluster0.lruurc9.mongodb.net/ai-music-player';
 
-console.log('Connecting to MongoDB...');
+console.log('🔗 Connecting to MongoDB...');
+console.log('URI:', MONGODB_URI.substring(0, 50) + '...');
 
-mongoose.connect(mongoURI, {
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000,
 })
-.then(() => {
-    console.log('✅ MongoDB Connected Successfully');
-})
-.catch(err => {
-    console.error('❌ MongoDB Connection Failed:', err.message);
-});
+.then(() => console.log('✅ MongoDB Connected'))
+.catch(err => console.log('⚠️ MongoDB Warning:', err.message));
 
 // Schemas
 const userSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
+    email: String,
     otp: String,
     otpExpires: Date,
     createdAt: { type: Date, default: Date.now }
@@ -50,7 +43,7 @@ const userSchema = new mongoose.Schema({
 const songSchema = new mongoose.Schema({
     title: String,
     artist: String,
-    cloudinaryURL: String,
+    url: String,
     userEmail: String,
     createdAt: { type: Date, default: Date.now }
 });
@@ -58,46 +51,42 @@ const songSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Song = mongoose.model('Song', songSchema);
 
-// In-memory storage (fallback)
+// Session storage
 const activeSessions = new Map();
 
-// Multer setup
-const storage = multer.memoryStorage();
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 }
-});
-
 // Auth middleware
-const authenticate = (req, res, next) => {
+const requireAuth = (req, res, next) => {
     const sessionId = req.headers.authorization;
     
-    if (!sessionId) {
-        return res.status(401).json({ message: 'No session token' });
+    if (!sessionId || !activeSessions.has(sessionId)) {
+        return res.status(401).json({ message: 'Unauthorized. Please login.' });
     }
     
     const session = activeSessions.get(sessionId);
-    
-    if (!session) {
-        return res.status(401).json({ message: 'Session expired' });
+    // Check if session is older than 24 hours
+    if (Date.now() - session.createdAt > 24 * 60 * 60 * 1000) {
+        activeSessions.delete(sessionId);
+        return res.status(401).json({ message: 'Session expired.' });
     }
     
     req.user = session;
     next();
 };
 
-// 1. Health Check
+// ================== ROUTES ==================
+
+// Health check
 app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         service: 'AI Music Player',
+        version: '3.0.0',
         timestamp: new Date().toISOString(),
-        mongodb: mongoose.connection.readyState === 1,
-        version: '2.0.0'
+        mongodb: mongoose.connection.readyState === 1
     });
 });
 
-// 2. Send OTP
+// Send OTP
 app.post('/auth/send-otp', async (req, res) => {
     try {
         const { email } = req.body;
@@ -108,76 +97,64 @@ app.post('/auth/send-otp', async (req, res) => {
         
         // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-        
-        // Save to database or memory
-        if (mongoose.connection.readyState === 1) {
-            await User.findOneAndUpdate(
-                { email },
-                { email, otp, otpExpires },
-                { upsert: true, new: true }
-            );
-        }
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
         
         console.log(`📧 OTP for ${email}: ${otp}`);
         
-        res.json({ 
-            message: 'OTP generated. Check server logs for code.',
-            otp: otp  // In production, remove this line
+        // Save OTP (in memory for now)
+        activeSessions.set(`otp_${email}`, { otp, otpExpires });
+        
+        res.json({
+            message: 'OTP generated successfully',
+            otp: otp // In production, remove this and send actual email
         });
         
     } catch (error) {
         console.error('OTP Error:', error);
-        res.status(500).json({ message: 'Error generating OTP', error: error.message });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
 
-// 3. Verify OTP
+// Verify OTP
 app.post('/auth/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
         
-        let isValid = false;
+        // Get stored OTP
+        const otpKey = `otp_${email}`;
+        const storedOtp = activeSessions.get(otpKey);
         
-        // Check in database
-        if (mongoose.connection.readyState === 1) {
-            const user = await User.findOne({ email, otp });
-            if (user && user.otpExpires > new Date()) {
-                isValid = true;
-                // Clear OTP
-                user.otp = null;
-                user.otpExpires = null;
-                await user.save();
-            }
-        } else {
-            // For demo, accept any OTP that was logged
-            console.log(`Verifying OTP for ${email}: ${otp}`);
-            isValid = true;
-        }
-        
-        if (!isValid) {
+        if (!storedOtp || storedOtp.otp !== otp || storedOtp.otpExpires < new Date()) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
         
+        // Remove OTP from storage
+        activeSessions.delete(otpKey);
+        
         // Create session
         const sessionId = crypto.randomBytes(32).toString('hex');
-        const session = { email, sessionId, createdAt: Date.now() };
+        const session = {
+            email,
+            sessionId,
+            createdAt: Date.now()
+        };
+        
         activeSessions.set(sessionId, session);
         
         res.json({
-            message: 'OTP verified successfully',
+            message: 'Login successful!',
             sessionId,
             email
         });
         
     } catch (error) {
         console.error('Verify Error:', error);
-        res.status(500).json({ message: 'Error verifying OTP', error: error.message });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
 
-// 4. Get Songs
-app.get('/songs', authenticate, async (req, res) => {
+// Get user's songs
+app.get('/songs', requireAuth, async (req, res) => {
     try {
         let songs = [];
         
@@ -185,18 +162,16 @@ app.get('/songs', authenticate, async (req, res) => {
             songs = await Song.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
         }
         
-        // If no songs, return demo songs
+        // If no songs, return demo song
         if (songs.length === 0) {
-            songs = [
-                {
-                    _id: 'demo1',
-                    title: 'Welcome Song',
-                    artist: 'AI Music Player',
-                    cloudinaryURL: 'https://res.cloudinary.com/dchyewou4/video/upload/v1700000000/music/sample.mp3',
-                    userEmail: req.user.email,
-                    createdAt: new Date()
-                }
-            ];
+            songs = [{
+                _id: 'demo1',
+                title: 'Welcome to AI Music Player',
+                artist: 'Demo Track',
+                url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                userEmail: req.user.email,
+                createdAt: new Date()
+            }];
         }
         
         res.json(songs);
@@ -207,32 +182,33 @@ app.get('/songs', authenticate, async (req, res) => {
     }
 });
 
-// 5. Upload Song (simplified for now)
-app.post('/upload', authenticate, upload.single('audio'), async (req, res) => {
+// Upload song
+const upload = multer({ storage: multer.memoryStorage() });
+app.post('/upload', requireAuth, upload.single('audio'), async (req, res) => {
     try {
         const file = req.file;
-        const title = req.body.title || 'Untitled';
+        const title = req.body.title || 'New Song';
         const artist = req.body.artist || 'Unknown Artist';
         
         if (!file) {
-            return res.status(400).json({ message: 'No audio file' });
+            return res.status(400).json({ message: 'No file uploaded' });
         }
         
-        // For now, just save metadata without Cloudinary
+        // Create song record (in a real app, upload to Cloudinary here)
         const songData = {
             title,
             artist,
-            cloudinaryURL: `https://example.com/${Date.now()}.mp3`, // Placeholder
-            userEmail: req.user.email,
-            createdAt: new Date()
+            url: `https://example.com/audio/${Date.now()}.mp3`, // Placeholder
+            userEmail: req.user.email
         };
         
         if (mongoose.connection.readyState === 1) {
             const song = new Song(songData);
             await song.save();
-            res.json({ message: 'Song metadata saved', song });
+            res.json({ message: 'Song saved successfully', song });
         } else {
-            res.json({ message: 'Upload would be processed with Cloudinary in production', song: songData });
+            songData._id = `song_${Date.now()}`;
+            res.json({ message: 'Song would be saved to database when connected', song: songData });
         }
         
     } catch (error) {
@@ -241,7 +217,7 @@ app.post('/upload', authenticate, upload.single('audio'), async (req, res) => {
     }
 });
 
-// 6. Logout
+// Logout
 app.post('/auth/logout', (req, res) => {
     const sessionId = req.headers.authorization;
     if (sessionId) {
@@ -256,8 +232,9 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
-    console.log(`🎵 Server running on port ${port}`);
-    console.log(`🔗 Health: http://localhost:${port}/health`);
-    console.log(`🔐 Authentication: ENABLED`);
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌐 Health: http://localhost:${PORT}/health`);
+    console.log(`🔐 OTP Login: Enabled`);
+    console.log(`📁 Frontend: Served from /public`);
 });
