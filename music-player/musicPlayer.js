@@ -35,19 +35,7 @@ music.src=songs[currentIndex];
 //play
 playBtn.addEventListener("click", function(){
  
-   if(isPlaying){
-
-   
-     music.pause();
-     isPlaying = false; 
-
-   }else{
-           
-           music.play();
-           isPlaying = true; 
-
-   }
- 
+   musicPlayer.play();
 
 });
 
@@ -56,27 +44,8 @@ playBtn.addEventListener("click", function(){
 
 //previous
 previous.addEventListener("click", function(){
-       currentIndex--;
-    if(currentIndex < 0 ){
-         currentIndex= songs.length-1;
-         currentIndex=images.length-1;
-
-         music.src=songs[songs.length-1 ];
-         Images.src=images[songs.length-1 ];
-         music.play();
-       
-
-  }else{
-         
-         music.src=songs[currentIndex ];
-         Images.src=images[currentIndex ];
-         
-         music.play();
-         currentIndex--;
-    
-         
-
-  }
+   
+        musicPlayer.pre();
 
 })
 
@@ -84,28 +53,73 @@ previous.addEventListener("click", function(){
 
 //next
 next.addEventListener("click", function(){
-   //for song
-  
-     if(currentIndex >= songs.length-1 ){
-     currentIndex=0;
-    
-    
-     music.src= songs[currentIndex];
-     Images.src=images[currentIndex]
-     music.play();
-    
-
-     
-  }else{
-   
-   currentIndex++
-   music.src= songs[currentIndex];
-   Images.src=images[currentIndex]
-   music.play();
-  }
-
+ 
+       musicPlayer.next();
 
   
 })
 
  
+
+
+//prototype
+
+let musicPlayer = {
+        pre : function(){
+                    currentIndex--;
+                    if(currentIndex < 0 ){
+                         currentIndex= songs.length-1;
+                         currentIndex=images.length-1;
+
+                         music.src=songs[songs.length-1 ];
+                         Images.src=images[songs.length-1 ];
+                         music.play();
+       
+
+                    }else{
+         
+                        music.src=songs[currentIndex ];
+                        Images.src=images[currentIndex ];
+         
+                        music.play();
+                        currentIndex--;
+
+                                 }
+                       },
+
+       play : function(){
+              
+                    if(isPlaying){
+                        music.pause();
+                        isPlaying = false; 
+
+                   }else{
+           
+                        music.play();
+                        isPlaying = true; 
+
+         }
+ 
+       },
+
+
+       next : function(){
+                   if(currentIndex >= songs.length-1 ){
+                      currentIndex=0;
+    
+    
+                      music.src= songs[currentIndex];
+                      Images.src=images[currentIndex]
+                      music.play();
+    
+
+     
+                  }else{
+   
+                      currentIndex++
+                      music.src= songs[currentIndex];
+                      Images.src=images[currentIndex]
+                      music.play();
+                   }   
+                          }
+ } 
